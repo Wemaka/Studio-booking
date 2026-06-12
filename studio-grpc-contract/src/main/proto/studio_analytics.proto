@@ -1,0 +1,53 @@
+// Контракт gRPC-сервиса аналитики книг
+//
+// Определяет сервис StudioAnalytics с одним RPC-методом AnalyzeStudio.
+// Из этого файла protoc + protoc-gen-grpc-java генерируют:
+// Классы сообщений - AnalyzeStudioRequest, StudioAnalysisResponse
+// Серверный базовый класс StudioAnalyticsGrpc.StudioAnalyticsImplBase
+// Клиентские стабы StudioAnalyticsGrpc.StudioAnalyticsBlockingStub
+
+syntax = "proto3";
+
+// Java-пакет для сгенерированных классов
+option java_package = "org.example.grpc";
+// Все сгенерированные классы будут в отдельных файлах (не во вложенных классах)
+option java_multiple_files = true;
+// Пакет proto (для именования в других .proto файлах при импорте)
+package studioganalytics;
+
+import "google/protobuf/timestamp.proto";
+
+// Сервисы
+// Unary RPC - один запрос это один ответ (типа аналог REST GET/POST)
+service StudioAnalytics {
+  // Анализирует показатели студии за указанный период
+  rpc AnalyzeStudio (AnalyzeStudioRequest) returns (StudioAnalysisResponse);
+}
+
+// Сообщения
+// В proto3 все поля опциональны по умолчанию (zero-value = не задано).
+// Номера полей (1, 2, 3...) используются в бинарном формате —
+// они не должны меняться после релиза
+// чтобы не нарушить совместимость
+
+// Запрос на анализ брони — данные, необходимые для вычисления метрик.
+message AnalyzeStudioRequest {
+  int64 studio_id          = 1;  // ID студии в системе
+  string name              = 2;  // Название студии
+  int32 price_per_hour     = 3;  // Цена в час
+  int32 total_booking      = 4;  // Общее количество бронирований
+  int64 total_duration_sum = 5; // Общая сумма продолжительности бронирования
+  // Период для сбора аналитики
+  google.protobuf.Timestamp start_date = 6;
+  google.protobuf.Timestamp end_date   = 7;
+}
+
+// Ответ с результатами анализа — вычисленные метрики книги.
+message StudioAnalysisResponse {
+  int64  studio_id             = 1;  // ID студии (echo back)
+  string name                  = 2;  // Название студии
+  double occupancy_rate        = 3;  // Процент заполняемости (0.0 - 100.0)
+  double total_revenue         = 4;  // Общая выручка
+  double avg_booking_duration  = 5;  // Средняя длительность брони (в минутах)
+  double recommendation_score  = 6;  // Рекомендательный балл (0.0 — 10.0)
+}

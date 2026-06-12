@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: audit-service
+
+    # Подключение к локальному брокеру
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+    #  Spring Boot передаёт trace-id из AMQP-заголовков в MDC логгера.
+    # Это позволяет связать запрос в demo-rest с обработкой в audit-service.
+    listener:
+      simple:
+        observation-enabled: true
+        # При ошибке обработки повторить 3 раза с интервалом 2 секунды.
+        # После исчерпания попыток сообщение уходит в DLQ (настроено в RabbitMQConfig).
+        retry:
+          enabled: true
+          initial-interval: 2000
+          max-attempts: 3
+          multiplier: 2.0
+
+    template:
+      observation-enabled: true
+
+# audit-service работает на другом порту, чтобы не конфликтовать с demo-rest (8080)
+server:
+  port: 8081
+
+# Health endpoint показывает состояние подключения к RabbitMQ.
+# В прод системах это используется для readiness-проверок в Kubernetes.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics
+  endpoint:
+    health:
+      show-details: always

@@ -1,0 +1,22 @@
+spring:
+  application:
+    name: grpc-analytics-server
+
+# HTTP-порт для Spring Boot (actuator, health)
+# Не конфликтует с studio-rest (8080), audit-service (8081), enrichment-client (8082)
+server:
+  port: 8083
+
+# Порт gRPC-сервера (отдельный от HTTP!)
+# gRPC использует свой собственный сервер на базе Netty,
+# который слушает на этом порту независимо от Tomcat.
+grpc:
+  server:
+    port: 9090
+
+# Actuator — проверка здоровья сервиса
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

@@ -1,0 +1,152 @@
+scalar DateTime
+scalar Date
+scalar LocalTime
+
+type Studio {
+    id: ID!
+    name: String!
+    location: String!
+    workingHoursStart: String!
+    workingHoursEnd: String!
+    isActive: Boolean!
+    pricePerHour: Int!
+
+    bookings(page: Int = 0, size: Int = 20): BookingConnection!
+}
+
+type Client {
+    id: ID!
+    name: String
+    bookings(page: Int = 0, size: Int = 20): BookingConnection!
+}
+
+type AvailableSlot {
+    studio: Studio!
+    startTime: DateTime!
+    endTime: DateTime!
+    durationMinutes: Int!
+    totalPrice: Int!
+}
+
+enum BookingStatus {
+    PENDING CONFIRMED CANCELLED
+}
+
+type Booking {
+    id: ID!
+    clientId: ID!
+    studio: Studio!
+    startTime: DateTime!
+    durationMinutes: Int!
+    status: BookingStatus!
+    clientNotes: String
+}
+
+
+# Типы для пагинации
+type StudioConnection {
+    content: [Studio!]!
+    pageInfo: PageInfo!
+    totalElements: Int!
+}
+
+type BookingConnection {
+    content: [Booking!]!
+    pageInfo: PageInfo!
+    totalElements: Int!
+}
+
+type AvailableSlotConnection {
+    content: [AvailableSlot!]!
+    pageInfo: PageInfo!
+    totalElements: Int!
+}
+
+# Метаданные страницы — номер, размер, общее число страниц.
+type PageInfo {
+    pageNumber: Int!
+    pageSize: Int!
+    totalPages: Int!
+    last: Boolean!
+}
+
+
+# Входные типы для мутаций
+input CreateStudioInput {
+    name: String!
+    location: String!
+    workingHoursStart: String!
+    workingHoursEnd: String!
+    isActive: Boolean
+    pricePerHour: Int!
+}
+
+input UpdateStudioInput {
+    name: String
+    location: String
+    workingHoursStart: String
+    workingHoursEnd: String
+    isActive: Boolean
+    pricePerHour: Int
+}
+
+input CreateBookingInput {
+    clientId: ID!
+    studioId: ID!
+    startTime: DateTime!
+    durationMinutes: Int!
+    clientNotes: String
+}
+
+input UpdateBookingInput {
+    startTime: DateTime
+    durationMinutes: Int
+    status: BookingStatus
+    clientNotes: String
+}
+
+
+# Фильтрация
+input AvailableSlotsFilter {
+    studioId: ID
+    date: Date
+    time: LocalTime
+    durationMinutes: Int
+}
+
+input BookingFilter {
+    clientId: ID
+    studioId: ID
+    startTime: DateTime
+    durationMinutes: Int
+    status: BookingStatus
+}
+
+input StudioFilter {
+    name: String
+    location: String
+    pricePerHour: Int
+    isActive: Boolean
+}
+
+# Корневые точки входа: запросы и мутации
+type Query {
+    studioById(id: ID!): Studio
+    studios(filter: StudioFilter, page: Int = 0, size: Int = 20): StudioConnection
+
+    availableSlots(filter: AvailableSlotsFilter, page: Int = 0, size: Int = 20): AvailableSlotConnection
+
+    bookingById(id: ID!): Booking
+    bookings(filter: BookingFilter, page: Int = 0, size: Int = 20): BookingConnection
+
+    clientById(id: ID!): Client
+}
+
+type Mutation {
+    createStudio(input: CreateStudioInput!): Studio!
+    updateStudio(id: ID!, input: UpdateStudioInput!): Studio!
+
+    createBooking(input: CreateBookingInput!): Booking!
+    updateBooking(id: ID!, input: UpdateBookingInput!): Booking!
+    cancelBooking(id: ID!): Boolean!
+}

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>4.0.3</version>
+        <relativePath/>
+    </parent>
+    <groupId>org.example</groupId>
+    <artifactId>grpc-enrichment-client</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>grpc-enrichment-client</name>
+    <description>gRPC-клиент обогащения — слушает booking.created из RabbitMQ, вызывает gRPC-сервер,
+        публикует booking.enriched</description>
+
+    <properties>
+        <java.version>17</java.version>
+        <grpc.version>1.66.0</grpc.version>
+    </properties>
+
+    <dependencies>
+
+        <!-- Spring Boot Web — для actuator и health endpoints -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <!-- Spring AMQP — интеграция с RabbitMQ (consumer + publisher) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-amqp</artifactId>
+        </dependency>
+
+        <!-- Actuator — health-проверки -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
+        <!-- gRPC-контракт — сгенерированные стабы из .proto -->
+        <dependency>
+            <groupId>org.example</groupId>
+            <artifactId>studio-grpc-contract</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <!-- Контракт доменных событий — BookEvent, EventEnvelope, RoutingKeys -->
+        <dependency>
+            <groupId>org.example</groupId>
+            <artifactId>studio-events-contract</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+
+        <!--
+            gRPC Netty Shaded — транспорт для gRPC-клиента.
+            Тот же артефакт, что и у сервера — Netty используется и для
+            клиентских, и для серверных соединений.
+        -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-netty-shaded</artifactId>
+            <version>${grpc.version}</version>
+        </dependency>
+
+        <!-- Jackson — сериализация/десериализация JSON в RabbitMQ-сообщениях -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+        </dependency>
+
+        <!-- Поддержка java.time (Instant, LocalDateTime) в Jackson -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.datatype</groupId>
+            <artifactId>jackson-datatype-jsr310</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <parameters>true</parameters>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+</project>

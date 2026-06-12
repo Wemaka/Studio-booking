@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        # Собрать всё в правильном порядке
+        .\mvnw install -DskipTests
+
+        # 1 Запустить demo-rest (REST + GraphQL + event publisher)
+        .\mvnw spring-boot:run -pl studio-rest -DskipTests
+        http://localhost:8080/graphiql
+        http://localhost:8080/swagger-ui.html
+
+        # 2 Запустить audit-service (RabbitMQ consumer)
+        .\mvnw spring-boot:run -pl audit-service -DskipTests
+        http://localhost:8081/api/audit
+        http://localhost:15672/
+
+        # 3 Запустить gRPC Analytics Server (порт gRPC: 9090, HTTP: 8083)
+        .\mvnw spring-boot:run -pl grpc-analytics-server -DskipTests
+
+        # 4 Запустить gRPC Enrichment Client (RabbitMQ → gRPC → RabbitMQ, HTTP: 8082)
+        .\mvnw spring-boot:run -pl grpc-enrichment-client -DskipTests
+
+        # 5 Запустить сервис уведомлений
+        .\mvnw spring-boot:run -pl notification-service -DskipTests
+        http://localhost:8084/
+
+        .\mvnw spring-boot:run
+    -->
+
+    <groupId>org.example</groupId>
+    <artifactId>studio-booking-app</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>pom</packaging>
+    <name>studio-rest [root aggregator]</name>
+    <modules>
+        <!-- Контракты (библиотеки без main) — собираются первыми -->
+        <module>studio-api-contract</module>
+        <module>studio-events-contract</module>
+        <module>studio-grpc-contract</module>
+
+        <!-- Сервисы — зависят от контрактов -->
+        <module>studio-rest</module>
+        <module>audit-service</module>
+        <module>grpc-analytics-server</module>
+        <module>grpc-enrichment-client</module>
+        <module>notification-service</module>
+    </modules>
+</project>
