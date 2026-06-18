@@ -27,6 +27,6 @@ public class WebSocketConfig implements WebSocketConfigurer {
 	public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
 		registry
 				.addHandler(notificationHandler, "/ws/notifications")
-				.setAllowedOrigins("*"); // в продае тут нужно указать домены
+				.setAllowedOrigins("*"); // в проде тут нужно указать домены
 	}
 }

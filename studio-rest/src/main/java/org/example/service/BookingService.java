@@ -8,6 +8,7 @@ import org.example.dto.response.BookingResponse;
 import org.example.dto.response.PagedResponse;
 import org.example.dto.response.StudioResponse;
 import org.example.event.BookingEventPublisher;
+import org.example.exception.ConflictException;
 import org.example.exception.NotFoundException;
 import org.example.exception.ValidationException;
 import org.example.storage.InMemoryStorage;
@@ -69,23 +70,28 @@ public class BookingService {
 	}
 
 	public BookingResponse createBooking(BookingRequest request) {
-		LocalDateTime localTime = request.startTime()
-				.atZoneSameInstant(ZoneId.systemDefault())
-				.toLocalDateTime();
 		StudioResponse studio = studioService.getStudioById(request.studioId());
 
-		// свободен ли этот слот
-		boolean isSlotAvailable = studioService.getAllAvailableSlots(
-						studio.getId(),
-						localTime.toLocalDate(),
-						localTime.toLocalTime(),
-						request.durationMinutes(),
-						0, Integer.MAX_VALUE
-				).content().stream()
-				.anyMatch(slot -> slot.getStartTime().isEqual(request.startTime()));
+		OffsetDateTime requestStart = request.startTime();
+		OffsetDateTime requestEnd   = requestStart.plusMinutes(request.durationMinutes());
 
-		if (!isSlotAvailable) {
-			throw new IllegalStateException("Выбранное время уже занято или студия закрыта!");
+// Проверяем пересечение с существующими активными бронями напрямую
+		boolean hasConflict = storage.bookings.values().stream()
+				.filter(b -> b.getStudio().getId().equals(request.studioId()))
+				.filter(b -> b.getStatus() != BookingStatus.CANCELLED)
+				.anyMatch(b -> {
+					OffsetDateTime existingStart = b.getStartTime();
+					OffsetDateTime existingEnd   = existingStart.plusMinutes(b.getDurationMinutes());
+					// Пересечение: новый начинается до конца существующего
+					//              И заканчивается после начала существующего
+					return requestStart.toInstant().isBefore(existingEnd.toInstant())
+							&& requestEnd.toInstant().isAfter(existingStart.toInstant());
+				});
+
+		if (hasConflict) {
+			throw new ConflictException(
+					"Студия " + studio.getName() + " уже забронирована на выбранное время"
+			);
 		}
 
 		long id = storage.bookingSequence.incrementAndGet();
@@ -93,7 +99,7 @@ public class BookingService {
 				.id(id)
 				.clientId(request.clientId())
 				.studio(studio)
-				.startTime(request.startTime()) // OffsetDateTime
+				.startTime(request.startTime())
 				.durationMinutes(request.durationMinutes())
 				.status(BookingStatus.PENDING)
 				.clientNotes(request.clientNotes())

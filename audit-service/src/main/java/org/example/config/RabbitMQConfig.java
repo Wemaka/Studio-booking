@@ -63,8 +63,7 @@ public class RabbitMQConfig {
 	 * Topic exchange — точка обмена, через которую проходят все доменные события.
 	 *
 	 * Topic exchange маршрутизирует сообщения по routing key:
-	 * - "book.created"  → попадёт в очередь с binding key "book.*"
-	 * - "author.deleted" → попадёт в очередь с binding key "#" (все события)
+	 * - "studio.created"  → попадёт в очередь с binding key "studio.*"
 	 *
 	 * durable=true: exchange выживает перезапуск RabbitMQ.
 	 */
@@ -129,8 +128,7 @@ public class RabbitMQConfig {
 	 * Binding key "#" означает «все сообщения» — audit-service фиксирует всё.
 	 *
 	 * В продакшене можно создать несколько очередей с разными binding key:
-	 * - q.audit.books с "book.*" — только события книг,
-	 * - q.notification.authors с "author.created" — уведомления при создании автора.
+	 * - q.audit.studio с "studio.*" — только события книг,
 	 */
 	@Bean
 	public Binding auditBinding(Queue auditQueue, TopicExchange eventsExchange) {

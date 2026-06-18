@@ -98,41 +98,37 @@ public class StudioService {
 			List<AvailableSlotResponse> studioSlots = new ArrayList<>();
 
 			for (Interval free : freeIntervals) {
-				LocalDateTime slotStart;
-				long availableFromSlotStart;
-
 				if (time != null) {
-					// Проверяем, попадает ли time в интервал [start, end)
-					if (time.isBefore(free.start().toLocalTime()) || !time.isBefore(free.end().toLocalTime())) {
+					// Конкретное время — проверяем что оно попадает в свободный интервал
+					if (time.isBefore(free.start().toLocalTime())
+							|| !time.isBefore(free.end().toLocalTime())) {
 						continue;
 					}
-					slotStart = LocalDateTime.of(targetDate, time);
-					availableFromSlotStart = Duration.between(slotStart, free.end()).toMinutes();
-				} else {
-					slotStart = free.start();
-					availableFromSlotStart = free.durationMinutes();
-				}
+					LocalDateTime slotStart = LocalDateTime.of(targetDate, time);
+					long available = Duration.between(slotStart, free.end()).toMinutes();
 
-				// Определяем длительность выдаваемого слота
-				long slotDuration;
-				if (durationMinutes != null) {
-					// Клиент явно указал желаемую длительность
-					if (availableFromSlotStart < durationMinutes) continue;
-					slotDuration = durationMinutes;
-				} else {
-					// Без указания длительности отдаём весь доступный остаток,
-					// но не короче минимального порога effectiveDuration (по умолчанию 60 минут)
-					if (availableFromSlotStart < effectiveDuration) continue;
-					slotDuration = availableFromSlotStart;
-				}
+					if (durationMinutes != null) {
+						if (available < durationMinutes) continue;
+						studioSlots.add(buildSlot(studio, slotStart, durationMinutes, targetDate));
+					} else {
+						if (available < effectiveDuration) continue;
+						studioSlots.add(buildSlot(studio, slotStart, available, targetDate));
+					}
 
-				studioSlots.add(AvailableSlotResponse.builder()
-						.studio(studio)
-						.startTime(slotStart.atOffset(OffsetDateTime.now().getOffset()))
-						.endTime(slotStart.plusMinutes(slotDuration).atOffset(OffsetDateTime.now().getOffset()))
-						.durationMinutes((int) slotDuration)
-						.totalPrice(studio.getPricePerHour() * ((int) slotDuration) / 60)
-						.build());
+				} else if (durationMinutes != null) {
+					// Нарезаем свободный интервал на равные слоты по durationMinutes
+					LocalDateTime slotStart = free.start();
+					while (!slotStart.plusMinutes(durationMinutes).isAfter(free.end())) {
+						studioSlots.add(buildSlot(studio, slotStart, durationMinutes, targetDate));
+						slotStart = slotStart.plusMinutes(durationMinutes);
+					}
+
+				} else {
+					// Без durationMinutes — один слот на весь свободный интервал
+					long available = free.durationMinutes();
+					if (available < effectiveDuration) continue;
+					studioSlots.add(buildSlot(studio, free.start(), available, targetDate));
+				}
 			}
 			return studioSlots.stream();
 		}).collect(Collectors.toList());
@@ -243,5 +239,19 @@ public class StudioService {
 			free.add(new Interval(curStart, workEnd));
 		}
 		return free;
+	}
+
+	private AvailableSlotResponse buildSlot(StudioResponse studio,
+	                                        LocalDateTime slotStart,
+	                                        long durationMinutes,
+	                                        LocalDate targetDate) {
+		ZoneOffset offset = OffsetDateTime.now().getOffset();
+		return AvailableSlotResponse.builder()
+				.studio(studio)
+				.startTime(slotStart.atOffset(offset))
+				.endTime(slotStart.plusMinutes(durationMinutes).atOffset(offset))
+				.durationMinutes((int) durationMinutes)
+				.totalPrice(studio.getPricePerHour() * (int) durationMinutes / 60)
+				.build();
 	}
 }
