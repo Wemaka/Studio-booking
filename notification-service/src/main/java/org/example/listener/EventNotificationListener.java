@@ -97,13 +97,13 @@ public class EventNotificationListener {
 
 	private String buildTitle(String eventType) {
 		return switch (eventType) {
-			case "book.created"   -> "Новая книга";
-			case "book.updated"   -> "Книга обновлена";
-			case "book.deleted"   -> "Книга удалена";
-			case "book.enriched"  -> "Аналитика книги";
-			case "author.created" -> "Новый автор";
-			case "author.deleted" -> "Автор удалён";
-			default               -> "Событие: " + eventType;
+			case "studio.created" -> "Новая студия";
+			case "studio.updated" -> "Студия обновлена";
+			case "studio.enriched" -> "Аналитика студии";
+			case "booking.created" -> "Новая бронь";
+			case "booking.updated" -> "Бронь обновлена";
+			case "booking.cancelled" -> "Бронь отменена";
+			default -> "Событие: " + eventType;
 		};
 	}
 
@@ -169,13 +169,13 @@ public class EventNotificationListener {
 
 	private String resolveIcon(String eventType) {
 		return switch (eventType) {
-			case "studio.created"   -> "studio-plus";
-			case "studio.updated"   -> "studio-edit";
-			case "studio.enriched"  -> "analytics";
+			case "studio.created" -> "studio-plus";
+			case "studio.updated" -> "studio-edit";
+			case "studio.enriched" -> "analytics";
 			case "booking.created" -> "booking-plus";
 			case "booking.updated" -> "booking-edit";
 			case "booking.cancelled" -> "booking-cancel";
-			default               -> "bell";
+			default -> "bell";
 		};
 	}
 
@@ -184,8 +184,8 @@ public class EventNotificationListener {
 	private String resolveLevel(String eventType) {
 		return switch (eventType) {
 			case "studio.updated", "booking.updated", "booking.cancelled" -> "warning";
-			case "studio.enriched"                  -> "info";
-			default                               -> "success";
+			case "studio.enriched" -> "info";
+			default -> "success";
 		};
 	}
 
